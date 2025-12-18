@@ -11,12 +11,12 @@ import { getAuth, signInAnonymously } from 'firebase/auth';
 import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
-  apiKey: "MOCK_API_KEY",
-  authDomain: "mock-trip-planner.firebaseapp.com",
-  projectId: "mock-trip-planner",
-  storageBucket: "mock-trip-planner.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abcdef"
+  apiKey: "AIzaSyC2FhBEJC_VilXXm2i2l9rVjXthFUUQuao",
+  authDomain: "travel-planner-d59ab.firebaseapp.com",
+  projectId: "travel-planner-d59ab",
+  storageBucket: "travel-planner-d59ab.firebasestorage.app",
+  messagingSenderId: "845991687518",
+  appId: "1:845991687518:web:8d356490f811f27fa6cbcf"
 };
 
 let db: any;

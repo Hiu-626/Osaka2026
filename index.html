@@ -1,9 +1,12 @@
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#F8F9F5">
   <title>Ohana Trip Planner</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -27,6 +30,7 @@
           borderRadius: {
             'xl-sticker': '1.25rem',
             '2xl-sticker': '1.5rem',
+            '3xl-sticker': '2rem',
           }
         }
       }
@@ -37,6 +41,7 @@
       background-color: #F8F9F5;
       -webkit-tap-highlight-color: transparent;
       overscroll-behavior-y: contain;
+      user-select: none;
     }
     .sticker-shadow {
       box-shadow: 4px 4px 0px #E0E5D5;
@@ -46,6 +51,9 @@
     }
     ::-webkit-scrollbar {
       display: none;
+    }
+    input, textarea {
+      user-select: text;
     }
   </style>
 <script type="importmap">

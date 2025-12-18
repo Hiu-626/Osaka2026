@@ -29,7 +29,6 @@ const App: React.FC = () => {
     const savedUser = localStorage.getItem('currentUser');
     if (savedUser) {
       const parsed = JSON.parse(savedUser);
-      // Ensure the saved user still exists in the members list
       const exists = members.find(m => m.id === parsed.id);
       return exists || members[0];
     }
@@ -69,10 +68,10 @@ const App: React.FC = () => {
 
   const handleDeleteMember = (id: string) => {
     if (id === currentUser.id) {
-      alert("You cannot delete the active user! Please switch to another member first.");
+      alert("Ohana! 你不能刪除目前正在使用的成員。請先切換身分。");
       return;
     }
-    if (confirm("Remove this member from the trip? This might affect existing expense splits.")) {
+    if (confirm("確定要移除這位成員嗎？這不會刪除已記錄的支出，但會影響未來的分帳顯示。")) {
       setMembers(members.filter(m => m.id !== id));
     }
   };
@@ -106,12 +105,12 @@ const App: React.FC = () => {
 
       {/* Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-paper border-t border-accent px-2 py-3 flex justify-around items-center z-50 rounded-t-3xl shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
-        <NavButton active={activeTab === 'schedule'} onClick={() => setActiveTab('schedule')} icon={<Calendar size={22} />} label="Schedule" />
-        <NavButton active={activeTab === 'bookings'} onClick={() => setActiveTab('bookings'} icon={<Ticket size={22} />} label="Bookings" />
-        <NavButton active={activeTab === 'expense'} onClick={() => setActiveTab('expense')} icon={<Wallet size={22} />} label="Expense" />
-        <NavButton active={activeTab === 'journal'} onClick={() => setActiveTab('journal')} icon={<Camera size={22} />} label="Journal" />
-        <NavButton active={activeTab === 'planning'} onClick={() => setActiveTab('planning')} icon={<CheckSquare size={22} />} label="Plan" />
-        <NavButton active={activeTab === 'members'} onClick={() => setActiveTab('members')} icon={<Users size={22} />} label="Mems" />
+        <NavButton active={activeTab === 'schedule'} onClick={() => setActiveTab('schedule')} icon={<Calendar size={22} />} label="行程" />
+        <NavButton active={activeTab === 'bookings'} onClick={() => setActiveTab('bookings')} icon={<Ticket size={22} />} label="預訂" />
+        <NavButton active={activeTab === 'expense'} onClick={() => setActiveTab('expense')} icon={<Wallet size={22} />} label="記帳" />
+        <NavButton active={activeTab === 'journal'} onClick={() => setActiveTab('journal')} icon={<Camera size={22} />} label="日誌" />
+        <NavButton active={activeTab === 'planning'} onClick={() => setActiveTab('planning')} icon={<CheckSquare size={22} />} label="清單" />
+        <NavButton active={activeTab === 'members'} onClick={() => setActiveTab('members')} icon={<Users size={22} />} label="成員" />
       </nav>
     </div>
   );

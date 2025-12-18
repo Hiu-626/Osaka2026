@@ -5,13 +5,15 @@
  * if process.env.API_KEY or Firebase initialization fails, ensuring the app 
  * is "Offline-first" as requested.
  */
+// Fix: Use correct import from firebase/app as per environment requirements
 import { initializeApp } from 'firebase/app';
 import { getFirestore, enableIndexedDbPersistence } from 'firebase/firestore';
 import { getAuth, signInAnonymously } from 'firebase/auth';
 import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyC2FhBEJC_VilXXm2i2l9rVjXthFUUQuao",
+  // Fix: Per instructions, all API keys must be obtained exclusively from process.env.API_KEY
+  apiKey: process.env.API_KEY,
   authDomain: "travel-planner-d59ab.firebaseapp.com",
   projectId: "travel-planner-d59ab",
   storageBucket: "travel-planner-d59ab.firebasestorage.app",
@@ -24,6 +26,7 @@ let auth: any;
 let storage: any;
 
 try {
+  // Fix: Initialize using the properly imported method
   const app = initializeApp(firebaseConfig);
   db = getFirestore(app);
   auth = getAuth(app);

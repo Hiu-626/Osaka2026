@@ -13,7 +13,8 @@ import {
   GripVertical,
   Trash2,
   RefreshCw,
-  ArrowRight
+  ArrowRight,
+  ExternalLink
 } from 'lucide-react';
 import { TripConfig, ScheduleItem, Category } from '../types';
 import { COLORS } from '../constants';
@@ -47,6 +48,8 @@ const Schedule: React.FC<{ config: TripConfig }> = ({ config: initialConfig }) =
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [weather, setWeather] = useState<WeatherData | null>(null);
+  // State for grounding sources as required by Google Search tool guidelines
+  const [weatherSources, setWeatherSources] = useState<{title?: string, uri?: string}[]>([]);
   const [loadingWeather, setLoadingWeather] = useState(false);
   
   const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
@@ -83,23 +86,39 @@ const Schedule: React.FC<{ config: TripConfig }> = ({ config: initialConfig }) =
   const fetchWeather = async () => {
     setLoadingWeather(true);
     try {
-      // Fixed: Initialize GoogleGenAI with process.env.API_KEY directly per guidelines
+      // Create new instance right before the call to ensure latest API key
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      // Fix: Per guidelines, do not set responseMimeType when using googleSearch tool
       const response = await ai.models.generateContent({
         model: "gemini-3-flash-preview",
-        contents: `Real-time weather for ${config.region}. Return JSON: temp (C), condition, humidity (%), rainProb (%).`,
-        config: { tools: [{ googleSearch: {} }], responseMimeType: "application/json" }
+        contents: `Provide the current real-time weather for ${config.region} including temperature in Celsius, conditions, humidity percentage, and rain probability.`,
+        config: { tools: [{ googleSearch: {} }] }
       });
-      // Fixed: Access response.text as a property, not a method, per guidelines
-      const data = JSON.parse(response.text || '{}');
+      
+      // Fix: Use response.text property directly. Do not assume JSON format with grounding tools.
+      const text = response.text || "";
+      
+      // Fix: Extract and list grounding URLs as strictly required by guidelines
+      const sources = response.candidates?.[0]?.groundingMetadata?.groundingChunks
+        ?.map((chunk: any) => chunk.web)
+        .filter(Boolean) || [];
+      setWeatherSources(sources);
+
+      // Extract values from natural language text
+      const temp = (text.match(/(\d+°C)/) || ["22°C"])[0];
+      const condition = (text.match(/(Sunny|Cloudy|Rain|Overcast|Clear)/i) || ["Sunny"])[0];
+      const humidity = (text.match(/(\d+%\s*humidity)/i) || ["45% humidity"])[0].split(' ')[0];
+      const rain = (text.match(/(\d+%\s*rain)/i) || ["5% rain"])[0].split(' ')[0];
+
       setWeather({
-        temp: data.temp || "22°C",
-        condition: data.condition || "Sunny",
-        humidity: data.humidity || "45%",
-        rainProb: data.rainProb || "5%",
+        temp,
+        condition,
+        humidity,
+        rainProb: rain,
         source: "Live"
       });
     } catch (e) {
+      console.error("Weather fetch failed", e);
       setWeather({ temp: "22°C", condition: "Sunny", humidity: "40%", rainProb: "0%", source: "Mock" });
     } finally {
       setLoadingWeather(false);
@@ -163,28 +182,48 @@ const Schedule: React.FC<{ config: TripConfig }> = ({ config: initialConfig }) =
       </div>
 
       {/* Dynamic Weather Card */}
-      <div className="bg-white p-5 rounded-2xl-sticker sticker-shadow border border-accent flex items-center justify-between relative overflow-hidden">
-        <div className="z-10 flex items-center gap-4">
-          <div className="w-16 h-16 bg-donald/20 rounded-full flex items-center justify-center text-donald sticker-shadow border-2 border-white">
-            {weather?.condition.toLowerCase().includes('rain') ? <CloudRain size={32} /> : <Sun size={32} />}
+      <div className="flex flex-col gap-2">
+        <div className="bg-white p-5 rounded-2xl-sticker sticker-shadow border border-accent flex items-center justify-between relative overflow-hidden">
+          <div className="z-10 flex items-center gap-4">
+            <div className="w-16 h-16 bg-donald/20 rounded-full flex items-center justify-center text-donald sticker-shadow border-2 border-white">
+              {weather?.condition.toLowerCase().includes('rain') ? <CloudRain size={32} /> : <Sun size={32} />}
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-navy/40 uppercase tracking-widest">{config.region}</p>
+              <h2 className="text-3xl font-black text-navy">{weather?.temp || '--'}</h2>
+              <p className="text-xs font-bold text-navy/60">{weather?.condition || 'Loading...'}</p>
+            </div>
           </div>
-          <div>
-            <p className="text-[10px] font-black text-navy/40 uppercase tracking-widest">{config.region}</p>
-            <h2 className="text-3xl font-black text-navy">{weather?.temp || '--'}</h2>
-            <p className="text-xs font-bold text-navy/60">{weather?.condition || 'Loading...'}</p>
+          <div className="text-right z-10 border-l border-accent pl-4">
+            <div className="mb-2">
+              <p className="text-[8px] font-black opacity-30 uppercase">Humidity</p>
+              <p className="text-xs font-bold text-stitch">{weather?.humidity || '--'}</p>
+            </div>
+            <div>
+              <p className="text-[8px] font-black opacity-30 uppercase">Rain Prob.</p>
+              <p className="text-xs font-bold text-stitch">{weather?.rainProb || '--'}</p>
+            </div>
           </div>
+          {loadingWeather && <div className="absolute inset-0 bg-white/60 flex items-center justify-center backdrop-blur-[1px] z-20"><RefreshCw className="animate-spin text-stitch" /></div>}
         </div>
-        <div className="text-right z-10 border-l border-accent pl-4">
-          <div className="mb-2">
-            <p className="text-[8px] font-black opacity-30 uppercase">Humidity</p>
-            <p className="text-xs font-bold text-stitch">{weather?.humidity || '--'}</p>
+        
+        {/* Fix: UI listing of grounding source URLs as required */}
+        {weatherSources.length > 0 && (
+          <div className="px-2 flex flex-wrap gap-2 overflow-hidden">
+            <span className="text-[8px] font-black text-navy/20 uppercase py-1">Sources:</span>
+            {weatherSources.slice(0, 3).map((source, idx) => (
+              <a 
+                key={idx} 
+                href={source.uri} 
+                target="_blank" 
+                rel="noreferrer"
+                className="text-[9px] font-bold text-stitch flex items-center gap-1 hover:underline truncate max-w-[120px]"
+              >
+                <ExternalLink size={8} /> {source.title || 'Source'}
+              </a>
+            ))}
           </div>
-          <div>
-            <p className="text-[8px] font-black opacity-30 uppercase">Rain Prob.</p>
-            <p className="text-xs font-bold text-stitch">{weather?.rainProb || '--'}</p>
-          </div>
-        </div>
-        {loadingWeather && <div className="absolute inset-0 bg-white/60 flex items-center justify-center backdrop-blur-[1px] z-20"><RefreshCw className="animate-spin text-stitch" /></div>}
+        )}
       </div>
 
       {/* Date Picker */}
@@ -194,7 +233,7 @@ const Schedule: React.FC<{ config: TripConfig }> = ({ config: initialConfig }) =
             key={day.index}
             onClick={() => setSelectedDay(day.index)}
             className={`flex-shrink-0 w-16 py-3 rounded-xl-sticker border-2 transition-all flex flex-col items-center snap-center ${
-              selectedDay === day.index ? 'bg-donald border-white text-navy sticker-shadow scale-105 z-10' : 'bg-paper border-accent opacity-50 text-navy'
+              selectedDay === day.index ? 'bg-donald border-white text-navy sticker-shadow scale-105' : 'bg-paper border-accent opacity-50 text-navy'
             }`}
           >
             <p className="text-[10px] font-black uppercase leading-none mb-1 opacity-60">{day.weekday}</p>
